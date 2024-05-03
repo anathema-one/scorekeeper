@@ -1,4 +1,4 @@
-AWSTemplateFormatVersion: '2010-09-09'
+AWSTemplateFormatVersion: "2010-09-09"
 Transform: AWS::Serverless-2016-10-31
 Globals:
   Function:
@@ -44,7 +44,7 @@ Resources:
       ApiId: !Ref WebSocketApi
       IntegrationType: AWS_PROXY
       IntegrationUri: !GetAtt AddPlayerFunction.Arn
-      PayloadFormatVersion: '1.0'
+      PayloadFormatVersion: "1.0"
 
   AddPlayerRoute:
     Type: AWS::ApiGatewayV2::Route
@@ -60,11 +60,70 @@ Resources:
       Runtime: nodejs14.x
       CodeUri: backend/lambda/removePlayer/
 
+  RemovePlayerIntegration:
+    Type: AWS::ApiGatewayV2::Integration
+    Properties:
+      ApiId: !Ref WebSocketApi
+      IntegrationType: AWS_PROXY
+      IntegrationUri: !GetAtt RemovePlayerFunction.Arn
+      PayloadFormatVersion: "1.0"
+
+  RemovePlayerRoute:
+    Type: AWS::ApiGatewayV2::Route
+    Properties:
+      ApiId: !Ref WebSocketApi
+      RouteKey: removePlayer
+      Target: !Sub "integrations/${RemovePlayerIntegration}"
+  # UpdateScore Integration and Route
+  UpdateScoreIntegration:
+    Type: AWS::ApiGatewayV2::Integration
+    Properties:
+      ApiId: !Ref WebSocketApi
+      IntegrationType: AWS_PROXY
+      IntegrationUri: !GetAtt UpdateScoreFunction.Arn
+      PayloadFormatVersion: "1.0"
+
+  UpdateScoreRoute:
+    Type: AWS::ApiGatewayV2::Route
+    Properties:
+      ApiId: !Ref WebSocketApi
+      RouteKey: updateScore
+      Target: !Sub "integrations/${UpdateScoreIntegration}"
+  # ResetPlayers Integration and Route
+  ResetPlayersIntegration:
+    Type: AWS::ApiGatewayV2::Integration
+    Properties:
+      ApiId: !Ref WebSocketApi
+      IntegrationType: AWS_PROXY
+      IntegrationUri: !GetAtt ResetPlayersFunction.Arn
+      PayloadFormatVersion: "1.0"
+
+  ResetPlayersRoute:
+    Type: AWS::ApiGatewayV2::Route
+    Properties:
+      ApiId: !Ref WebSocketApi
+      RouteKey: resetPlayers
+      Target: !Sub "integrations/${ResetPlayersIntegration}"
+  # ResetScores Integration and Route
+  ResetScoresIntegration:
+    Type: AWS::ApiGatewayV2::Integration
+    Properties:
+      ApiId: !Ref WebSocketApi
+      IntegrationType: AWS_PROXY
+      IntegrationUri: !GetAtt ResetScoresFunction.Arn
+      PayloadFormatVersion: "1.0"
+
+  ResetScoresRoute:
+    Type: AWS::ApiGatewayV2::Route
+    Properties:
+      ApiId: !Ref WebSocketApi
+      RouteKey: resetScores
+      Target: !Sub "integrations/${ResetScoresIntegration}"
+
 Outputs:
   WebSocketUri:
     Description: "WebSocket URI"
-    Value: 
-      !Sub 
-        - "${WebSocketApi}.execute-api.${AWS::Region}.amazonaws.com/${StageName}"
-        - WebSocketApi: !Ref WebSocketApi
-          StageName: !Ref WebSocketApiStage
+    Value: !Sub
+      - "${WebSocketApi}.execute-api.${AWS::Region}.amazonaws.com/${StageName}"
+      - WebSocketApi: !Ref WebSocketApi
+        StageName: !Ref WebSocketApiStage

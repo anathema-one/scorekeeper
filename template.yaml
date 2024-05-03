@@ -1,0 +1,70 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Globals:
+  Function:
+    Timeout: 10
+
+Resources:
+  WebSocketApi:
+    Type: AWS::ApiGatewayV2::Api
+    Properties:
+      Name: ScorekeeperWebSocketApi
+      ProtocolType: WEBSOCKET
+      RouteSelectionExpression: $request.body.action
+
+  WebSocketApiDeployment:
+    Type: AWS::ApiGatewayV2::Deployment
+    Properties:
+      ApiId: !Ref WebSocketApi
+    DependsOn:
+      - AddPlayerRoute
+      - RemovePlayerRoute
+      - UpdateScoreRoute
+      - ResetPlayersRoute
+      - ResetScoresRoute
+
+  WebSocketApiStage:
+    Type: AWS::ApiGatewayV2::Stage
+    Properties:
+      StageName: prod
+      ApiId: !Ref WebSocketApi
+      DeploymentId: !Ref WebSocketApiDeployment
+      AutoDeploy: true
+
+  AddPlayerFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: addPlayer.handler
+      Runtime: nodejs14.x
+      CodeUri: backend/lambda/addPlayer/
+
+  AddPlayerIntegration:
+    Type: AWS::ApiGatewayV2::Integration
+    Properties:
+      ApiId: !Ref WebSocketApi
+      IntegrationType: AWS_PROXY
+      IntegrationUri: !GetAtt AddPlayerFunction.Arn
+      PayloadFormatVersion: '1.0'
+
+  AddPlayerRoute:
+    Type: AWS::ApiGatewayV2::Route
+    Properties:
+      ApiId: !Ref WebSocketApi
+      RouteKey: addPlayer
+      Target: !Sub "integrations/${AddPlayerIntegration}"
+
+  RemovePlayerFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: removePlayer.handler
+      Runtime: nodejs14.x
+      CodeUri: backend/lambda/removePlayer/
+
+Outputs:
+  WebSocketUri:
+    Description: "WebSocket URI"
+    Value: 
+      !Sub 
+        - "${WebSocketApi}.execute-api.${AWS::Region}.amazonaws.com/${StageName}"
+        - WebSocketApi: !Ref WebSocketApi
+          StageName: !Ref WebSocketApiStage

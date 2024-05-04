@@ -1,4 +1,4 @@
-const db = require('../lib/db');  // Adjust the path as necessary
+const db = require('../../lib/db');  // Adjust the path as necessary
 
 exports.handler = async (event) => {
     const { playerName } = JSON.parse(event.body);
